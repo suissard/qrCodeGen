@@ -1,0 +1,586 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de QR Code Material Design 💅</title>
+    <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Styles généraux pour le corps de la page - Material Design */
+        body {
+            font-family: 'Roboto', 'Arial', sans-serif; /* Police Material Design */
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #eceff1; /* Gris clair Material (Blue Grey 50) */
+            color: #263238; /* Texte principal Material (Blue Grey 900) */
+            padding: 0; 
+            box-sizing: border-box;
+            overflow-x: hidden; 
+        }
+
+        /* Fond semi-transparent lorsque la sidebar est ouverte sur mobile */
+        body.sidebar-backdrop-active::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999; 
+        }
+        
+        /* Conteneur global pour la page */
+        .page-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px; 
+            margin-top: 24px; /* Espacement Material */
+            padding: 0 16px; /* Padding latéral Material */
+            box-sizing: border-box;
+        }
+
+        /* Contenu principal */
+        .main-content {
+            flex-grow: 1; 
+            padding: 0 8px; /* Ajustement du padding */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Style pour le conteneur du générateur - Material Card */
+        .generator-container {
+            background-color: #ffffff; /* Fond blanc pour les cartes */
+            padding: 24px; 
+            border-radius: 8px; /* Coins arrondis Material (moins que Bootstrap) */
+            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.2), 
+                        0 4px 5px 0 rgba(0,0,0,0.14), 
+                        0 1px 10px 0 rgba(0,0,0,0.12); /* Élévation Material (dp2) */
+            text-align: center;
+            width: 100%;
+            max-width: 480px; /* Largeur max ajustée */
+        }
+
+        h1 {
+            color: #0d47a1; /* Bleu foncé Material (Blue 900) */
+            margin-top: 0; 
+            margin-bottom: 24px;
+            font-size: 1.75em; /* Taille de police Material (h5) */
+            font-weight: 500; /* Poids de police Material */
+        }
+
+        /* Input field Material Design */
+        .input-group {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        #urlInput {
+            width: 100%; 
+            padding: 12px 0 8px 0; /* Padding pour l'underline */
+            border: none;
+            border-bottom: 1px solid rgba(0,0,0,0.42); /* Ligne de base Material */
+            font-size: 1em;
+            box-sizing: border-box;
+            background-color: transparent;
+            transition: border-bottom-color 0.3s ease;
+        }
+        #urlInput:focus {
+            outline: none;
+            border-bottom: 2px solid #0d47a1; /* Couleur primaire au focus */
+        }
+        /* Label flottant (simplifié, pour l'esthétique) */
+        .input-group label.floating-label {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            font-size: 1em;
+            color: rgba(0,0,0,0.6);
+            pointer-events: none;
+            transition: all 0.2s ease-out;
+        }
+        #urlInput:focus + .floating-label,
+        #urlInput:not(:placeholder-shown) + .floating-label {
+            top: -14px;
+            font-size: 0.75em;
+            color: #0d47a1; /* Couleur primaire */
+        }
+        
+        #qrCodeZone {
+            width: 256px; 
+            height: 256px;
+            margin: 24px auto; /* Espacement Material */
+            border: 1px solid #e0e0e0; /* Bordure Material (Grey 300) */
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f5f5; /* Fond Material (Grey 100) */
+            border-radius: 4px; /* Coins légèrement arrondis */
+            position: relative; 
+            overflow: hidden; 
+        }
+        #qrCodeZone canvas, #qrCodeZone svg { display: block; max-width: 100%; max-height: 100%; }
+        #qrCodeZone p { color: #757575; font-size: 0.9em; padding: 16px; margin: 0; } /* Texte Material (Grey 600) */
+
+        .download-buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 16px; /* Espacement Material */
+            margin-top: 24px;
+            flex-wrap: wrap; 
+        }
+
+        /* Boutons Material Design */
+        .material-button {
+            background-color: #1976d2; /* Couleur primaire Material (Blue 700) */
+            color: white;
+            padding: 8px 16px; 
+            border: none;
+            border-radius: 4px; 
+            font-size: 0.875em; /* Taille de police Material */
+            font-weight: 500;
+            text-transform: uppercase; /* Majuscules pour les boutons Material */
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); /* Légère élévation */
+            min-width: 100px; /* Largeur minimale */
+        }
+        .material-button:hover {
+            background-color: #1565c0; /* Assombrir au survol (Blue 800) */
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+        }
+        .material-button:disabled {
+            background-color: rgba(0,0,0,0.12); /* Fond désactivé Material */
+            color: rgba(0,0,0,0.38); /* Texte désactivé Material */
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        #downloadSvgButton.material-button {
+            background-color: #00897b; /* Couleur secondaire Material (Teal 600) */
+        }
+        #downloadSvgButton.material-button:hover {
+            background-color: #00796b; /* Teal 700 */
+        }
+
+
+        /* Sidebar pour les options - Material Drawer */
+        .sidebar {
+            width: 300px; 
+            background-color: #ffffff;
+            padding: 16px;
+            box-shadow: 0px 8px 10px -5px rgba(0,0,0,0.2), 
+                        0px 16px 24px 2px rgba(0,0,0,0.14), 
+                        0px 6px 30px 5px rgba(0,0,0,0.12); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            transform: translateX(100%); 
+            position: fixed; 
+            right: 0; top: 0; bottom: 0;
+            height: 100vh; 
+            overflow-y: auto; 
+            z-index: 1000; 
+            box-sizing: border-box;
+        }
+        .sidebar.visible { 
+            transform: translateX(0); 
+        }
+        .sidebar-header { 
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #e0e0e0; 
+        }
+        .sidebar-header h2 {
+            font-size: 1.25em; color: #0d47a1; 
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .sidebar .option-group { margin-bottom: 20px; } 
+        .sidebar label {
+            display: block; margin-bottom: 6px; font-weight: 500; 
+            font-size: 0.875em; color: #37474f; 
+        }
+        .sidebar input[type="color"], .sidebar input[type="text"],
+        .sidebar input[type="range"], .sidebar select { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid rgba(0,0,0,0.23); 
+            border-radius: 4px; 
+            font-size: 0.9em; margin-bottom: 8px; 
+            box-sizing: border-box; 
+            background-color: #f5f5f5; 
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .sidebar input[type="color"] { padding: 4px; height: 40px; } 
+        .sidebar input[type="range"] { padding: 0; background-color: transparent; border: none;}
+        .sidebar input:not([type="range"]):focus, .sidebar select:focus {
+            border-color: #0d47a1; 
+            box-shadow: 0 0 0 1px #0d47a1; 
+            background-color: #fff;
+        }
+
+        .sidebar small, .sidebar .warning-text { 
+            font-size: 0.75em; color: #546e7a; display: block; margin-top: 4px; 
+        }
+        .sidebar .warning-text { color: #d32f2f; font-weight: 500; } 
+
+        /* Bouton pour ouvrir/fermer la sidebar - Material FAB (Floating Action Button) */
+        #toggleSidebarButton {
+            position: fixed; top: 16px; right: 16px; 
+            background-color: #1976d2; /* Couleur primaire pour l'engrenage */
+            color: white; border: none; border-radius: 50%; 
+            width: 56px; height: 56px; /* Taille standard FAB */
+            font-size: 24px; 
+            cursor: pointer; 
+            box-shadow: 0 6px 10px 0 rgba(0,0,0,0.14), 
+                        0 1px 18px 0 rgba(0,0,0,0.12), 
+                        0 3px 5px -1px rgba(0,0,0,0.2); 
+            z-index: 1001; display: flex; align-items: center; justify-content: center;
+            transition: background-color 0.3s, transform 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out, font-size 0.3s ease-out;
+            transform: rotate(0deg); /* Rotation initiale pour l'icône 'settings' */
+        }
+        #toggleSidebarButton:hover {
+            background-color: #1565c0; 
+        }
+        #toggleSidebarButton.sidebar-open { 
+            background-color: #757575; /* Couleur pour l'état ouvert (icône '+') */
+            transform: rotate(45deg); /* Le '+' devient un 'X' */
+            width: 48px; /* Taille réduite */
+            height: 48px; /* Taille réduite */
+            font-size: 22px; /* Icône légèrement plus petite pour le bouton réduit */
+        }
+
+
+        /* Styles pour mobile */
+        @media (max-width: 768px) {
+            .page-container { flex-direction: column; padding: 0 8px; margin-top: 16px; }
+            .main-content { padding: 8px 0; }
+            .generator-container { padding: 16px; }
+            .sidebar { width: 85%; max-width: 320px; }
+            h1 { font-size: 1.5em; }
+            .material-button { font-size: 0.8em; padding: 8px 12px; }
+            /* La taille du FAB est déjà gérée par .sidebar-open pour l'état réduit */
+        }
+
+        @media (max-width: 480px) {
+            .sidebar { width: 90%; max-width: none; }
+            .sidebar input[type="color"], .sidebar input[type="text"],
+            .sidebar input[type="range"], .sidebar select {
+                padding: 12px; font-size: 1em;
+            }
+            .sidebar label { font-size: 0.95em; }
+            h1 { font-size: 1.3em; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <button id="toggleSidebarButton" class="material-icons">settings</button> <div class="page-container">
+        <div class="main-content">
+            <div class="generator-container">
+                <h1>Générateur de QR Code</h1>
+                <div class="input-group">
+                    <input type="text" id="urlInput" placeholder=" " required> 
+                    <label for="urlInput" class="floating-label">Entrez une URL (ex: https://www.google.com)</label>
+                </div>
+                <div id="qrCodeZone">
+                    <p>Le QR code apparaîtra ici...</p>
+                </div>
+                <div class="download-buttons-container">
+                    <button id="downloadButton" class="material-button" disabled>Télécharger (PNG)</button>
+                    <button id="downloadSvgButton" class="material-button" disabled>Télécharger (SVG)</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="optionsSidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2>Options de Style</h2>
+            </div>
+            
+            <div class="option-group">
+                <label for="dotStyleSelect">Style des modules (points) :</label>
+                <select id="dotStyleSelect">
+                    <option value="square">Carré</option>
+                    <option value="dots">Points</option>
+                    <option value="rounded">Arrondi</option>
+                    <option value="extra-rounded">Très arrondi</option>
+                    <option value="classy">Chic</option>
+                    <option value="classy-rounded">Chic arrondi</option>
+                </select>
+            </div>
+            <div class="option-group">
+                <label for="qrColorInput">Couleur des modules :</label>
+                <input type="color" id="qrColorInput" value="#000000">
+            </div>
+
+            <div class="option-group">
+                <label for="cornerSquareStyleSelect">Style des carrés de coin :</label>
+                <select id="cornerSquareStyleSelect">
+                    <option value="square">Carré</option>
+                    <option value="dot">Point</option>
+                    <option value="extra-rounded">Très arrondi</option>
+                </select>
+            </div>
+            <div class="option-group">
+                <label for="cornerSquareColorInput">Couleur des carrés de coin :</label>
+                <input type="color" id="cornerSquareColorInput" value="#000000">
+            </div>
+            
+            <div class="option-group">
+                <label for="backgroundColorInput">Couleur de fond :</label>
+                <input type="color" id="backgroundColorInput" value="#ffffff">
+            </div>
+
+            <div class="option-group">
+                <label for="logoUrlInput">URL du logo (optionnel) :</label>
+                <input type="text" id="logoUrlInput" placeholder="https://example.com/logo.png">
+                <small>Utilisez un PNG/JPG transparent. Testez la lisibilité.</small>
+                <p class="warning-text">Logo trop grand/complexe = QR illisible.</p>
+            </div>
+            <div class="option-group">
+                <label for="logoSizeInput">Taille du logo (ratio) :</label>
+                <input type="range" id="logoSizeInput" min="0.1" max="0.4" step="0.01" value="0.2">
+                <span id="logoSizeValue">0.2</span>
+            </div>
+            <div class="option-group">
+                <label for="logoMarginInput">Marge autour du logo (pixels) :</label>
+                <input type="range" id="logoMarginInput" min="0" max="20" step="1" value="5">
+                <span id="logoMarginValue">5px</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Références aux éléments DOM
+        const urlInputElement = document.getElementById('urlInput');
+        const qrCodeZoneElement = document.getElementById('qrCodeZone');
+        const downloadButtonElement = document.getElementById('downloadButton');
+        const downloadSvgButtonElement = document.getElementById('downloadSvgButton'); 
+
+        // Options de style
+        const qrColorInputElement = document.getElementById('qrColorInput');
+        const dotStyleSelectElement = document.getElementById('dotStyleSelect');
+        const cornerSquareStyleSelectElement = document.getElementById('cornerSquareStyleSelect');
+        const cornerSquareColorInputElement = document.getElementById('cornerSquareColorInput');
+        const backgroundColorInputElement = document.getElementById('backgroundColorInput');
+        
+        // Options du logo
+        const logoUrlInputElement = document.getElementById('logoUrlInput');
+        const logoSizeInputElement = document.getElementById('logoSizeInput');
+        const logoSizeValueElement = document.getElementById('logoSizeValue');
+        const logoMarginInputElement = document.getElementById('logoMarginInput');
+        const logoMarginValueElement = document.getElementById('logoMarginValue');
+
+        // Sidebar
+        const optionsSidebarElement = document.getElementById('optionsSidebar');
+        const toggleSidebarButtonElement = document.getElementById('toggleSidebarButton');
+
+        const QR_CODE_DIMENSION = 256; 
+        const LOCAL_STORAGE_KEY = 'qrGeneratorStyledSettings_MD_v2'; // Clé légèrement modifiée pour éviter conflits
+
+        let qrCodeInstance = null;
+
+        function initializeQrCodeInstance() {
+            if (!qrCodeZoneElement) {
+                console.error("Élément qrCodeZone introuvable pour l'initialisation de QRCodeStyling.");
+                return; 
+            }
+            qrCodeInstance = new QRCodeStyling({
+                width: QR_CODE_DIMENSION, height: QR_CODE_DIMENSION, type: "svg", data: "", image: "", 
+                dotsOptions: { color: "#000000", type: "square" },
+                backgroundOptions: { color: "#ffffff" },
+                cornersSquareOptions: { type: "square", color: "#000000" },
+                imageOptions: { crossOrigin: "anonymous", margin: 5, imageSize: 0.2 }
+            });
+            qrCodeInstance.append(qrCodeZoneElement);
+        }
+        
+        function saveSettingsToLocalStorage() {
+            if (!urlInputElement || !qrColorInputElement || !dotStyleSelectElement || 
+                !cornerSquareStyleSelectElement || !cornerSquareColorInputElement ||
+                !backgroundColorInputElement || !logoUrlInputElement || !logoSizeInputElement || !logoMarginInputElement) {
+                return;
+            }
+            const settings = {
+                url: urlInputElement.value, dotsColor: qrColorInputElement.value, dotsType: dotStyleSelectElement.value,
+                cornersSquareType: cornerSquareStyleSelectElement.value, cornersSquareColor: cornerSquareColorInputElement.value,
+                backgroundColor: backgroundColorInputElement.value, logoUrl: logoUrlInputElement.value,
+                logoSize: logoSizeInputElement.value, logoMargin: logoMarginInputElement.value
+            };
+            try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings)); } 
+            catch (error) { console.error("Erreur lors de la sauvegarde dans localStorage:", error); }
+        }
+
+        function loadSettingsFromLocalStorage() {
+            if (!urlInputElement || !qrColorInputElement || !dotStyleSelectElement || 
+                !cornerSquareStyleSelectElement || !cornerSquareColorInputElement ||
+                !backgroundColorInputElement || !logoUrlInputElement || !logoSizeInputElement || !logoSizeValueElement ||
+                !logoMarginInputElement || !logoMarginValueElement ) {
+                return;
+            }
+            try {
+                const savedSettings = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    urlInputElement.value = settings.url || ''; 
+                    qrColorInputElement.value = settings.dotsColor || '#000000';
+                    dotStyleSelectElement.value = settings.dotsType || 'square';
+                    cornerSquareStyleSelectElement.value = settings.cornersSquareType || 'square';
+                    cornerSquareColorInputElement.value = settings.cornersSquareColor || '#000000';
+                    backgroundColorInputElement.value = settings.backgroundColor || '#ffffff';
+                    logoUrlInputElement.value = settings.logoUrl || '';
+                    logoSizeInputElement.value = settings.logoSize || '0.2';
+                    logoSizeValueElement.textContent = logoSizeInputElement.value; 
+                    logoMarginInputElement.value = settings.logoMargin || '5';
+                    logoMarginValueElement.textContent = logoMarginInputElement.value + 'px'; 
+                }
+            } catch (error) { console.error("Erreur lors du chargement depuis localStorage:", error); }
+        }
+
+        function updateAndDisplayQrCode() {
+            if (!qrCodeInstance) {
+                if(qrCodeZoneElement) qrCodeZoneElement.innerHTML = '<p>Erreur d\'initialisation du générateur.</p>';
+                return;
+            }
+            if (!urlInputElement || !qrColorInputElement || !dotStyleSelectElement || 
+                !cornerSquareStyleSelectElement || !cornerSquareColorInputElement ||
+                !backgroundColorInputElement || !logoUrlInputElement || !logoSizeInputElement || !logoMarginInputElement) {
+                return;
+            }
+            const text = urlInputElement.value.trim(); 
+            if (text === "") {
+                if(qrCodeZoneElement) {
+                     while (qrCodeZoneElement.firstChild) { qrCodeZoneElement.removeChild(qrCodeZoneElement.firstChild); }
+                     if(qrCodeInstance._canvas){ 
+                        try { qrCodeInstance.update({data: ""}); } catch(e) { /* ignore */ }
+                     }
+                     qrCodeZoneElement.innerHTML = '<p>Entrez une URL pour générer un QR code.</p>';
+                }
+                if (downloadButtonElement) downloadButtonElement.disabled = true;
+                if (downloadSvgButtonElement) downloadSvgButtonElement.disabled = true;
+                saveSettingsToLocalStorage(); 
+                return;
+            }
+            const existingErrorMsg = document.querySelector('.logo-error-message'); 
+            if (existingErrorMsg && existingErrorMsg.parentNode === qrCodeZoneElement) {
+                 qrCodeZoneElement.removeChild(existingErrorMsg);
+            }
+            const options = {
+                width: QR_CODE_DIMENSION, height: QR_CODE_DIMENSION, data: text, image: logoUrlInputElement.value.trim(), 
+                dotsOptions: { color: qrColorInputElement.value, type: dotStyleSelectElement.value },
+                backgroundOptions: { color: backgroundColorInputElement.value },
+                cornersSquareOptions: { type: cornerSquareStyleSelectElement.value, color: cornerSquareColorInputElement.value },
+                imageOptions: { crossOrigin: "anonymous", margin: parseInt(logoMarginInputElement.value, 10), imageSize: parseFloat(logoSizeInputElement.value) }
+            };
+            if (!qrCodeZoneElement.contains(qrCodeInstance._canvas) && qrCodeInstance._canvas) {
+                 while (qrCodeZoneElement.firstChild) { qrCodeZoneElement.removeChild(qrCodeZoneElement.firstChild); }
+                qrCodeInstance.append(qrCodeZoneElement);
+            }
+            qrCodeInstance.update(options);
+            if (downloadButtonElement) downloadButtonElement.disabled = false;
+            if (downloadSvgButtonElement) downloadSvgButtonElement.disabled = false;
+            saveSettingsToLocalStorage(); 
+        }
+        
+        function telechargerQrCode(extension = 'png') {
+            if (!qrCodeInstance || !urlInputElement.value.trim()) { 
+                alert("Aucun QR code à télécharger. Veuillez d'abord entrer une URL et générer un QR code.");
+                return;
+            }
+            try { qrCodeInstance.download({ name: 'qr-code-material', extension: extension }); } 
+            catch (error) { 
+                console.error(`Erreur lors du téléchargement en ${extension}:`, error);
+                alert(`Une erreur est survenue lors de la préparation du téléchargement (${extension}).`);
+            }
+        }
+
+        function toggleSidebar() {
+            if (optionsSidebarElement && toggleSidebarButtonElement) {
+                const isBecomingVisible = !optionsSidebarElement.classList.contains('visible');
+                optionsSidebarElement.classList.toggle('visible');
+                toggleSidebarButtonElement.classList.toggle('sidebar-open', isBecomingVisible);
+                // Change l'icône en fonction de l'état
+                toggleSidebarButtonElement.textContent = isBecomingVisible ? 'add' : 'settings'; 
+
+                if (window.innerWidth <= 768) { 
+                    document.body.classList.toggle('sidebar-backdrop-active', isBecomingVisible);
+                }
+            }
+        }
+        
+        if (toggleSidebarButtonElement) toggleSidebarButtonElement.addEventListener('click', toggleSidebar);
+
+        document.addEventListener('click', function(event) {
+            if (optionsSidebarElement && toggleSidebarButtonElement) {
+                const isSidebarVisible = optionsSidebarElement.classList.contains('visible');
+                const clickedOutsideSidebar = !optionsSidebarElement.contains(event.target);
+                const clickedOnToggleButton = toggleSidebarButtonElement.contains(event.target) || event.target === toggleSidebarButtonElement;
+                if (isSidebarVisible && clickedOutsideSidebar && !clickedOnToggleButton) {
+                    toggleSidebar(); 
+                }
+            }
+        });
+
+        const inputsToWatchForUpdate = [
+            urlInputElement, qrColorInputElement, dotStyleSelectElement, 
+            cornerSquareStyleSelectElement, cornerSquareColorInputElement, backgroundColorInputElement
+        ];
+        inputsToWatchForUpdate.forEach(input => {
+            if (input) {
+                const eventType = (input.tagName === 'SELECT' || input.type === 'color') ? 'change' : 'input';
+                input.addEventListener(eventType, updateAndDisplayQrCode);
+            }
+        });
+        if (logoUrlInputElement) logoUrlInputElement.addEventListener('change', updateAndDisplayQrCode);
+
+        if (logoSizeInputElement && logoSizeValueElement) {
+            logoSizeInputElement.addEventListener('input', function() {
+                logoSizeValueElement.textContent = this.value; 
+                updateAndDisplayQrCode(); 
+            });
+        }
+        if (logoMarginInputElement && logoMarginValueElement) {
+            logoMarginInputElement.addEventListener('input', function() {
+                logoMarginValueElement.textContent = this.value + 'px'; 
+                updateAndDisplayQrCode(); 
+            });
+        }
+
+        if (downloadButtonElement) downloadButtonElement.addEventListener('click', () => telechargerQrCode('png'));
+        if (downloadSvgButtonElement) downloadSvgButtonElement.addEventListener('click', () => telechargerQrCode('svg'));
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeQrCodeInstance(); 
+            loadSettingsFromLocalStorage(); 
+            updateAndDisplayQrCode(); 
+            
+            if (urlInputElement && urlInputElement.value) {
+                const label = urlInputElement.nextElementSibling;
+                if (label && label.classList.contains('floating-label')) {
+                    label.style.top = '-14px';
+                    label.style.fontSize = '0.75em';
+                    label.style.color = '#0d47a1';
+                }
+            }
+            // Gérer l'état initial du bouton FAB (icône et classe)
+            if (toggleSidebarButtonElement && optionsSidebarElement) {
+                 if (optionsSidebarElement.classList.contains('visible')) {
+                    toggleSidebarButtonElement.textContent = 'add';
+                    toggleSidebarButtonElement.classList.add('sidebar-open');
+                 } else {
+                    toggleSidebarButtonElement.textContent = 'settings';
+                    toggleSidebarButtonElement.classList.remove('sidebar-open');
+                 }
+            }
+        });
+
+    </script>
+</body>
+</html>
